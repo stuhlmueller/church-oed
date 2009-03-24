@@ -1,0 +1,57 @@
+#!r6rs
+(import (church church) 
+        (church church-eval trace-eval) 
+        (church readable-scheme) 
+        (oed-utils)
+        (rnrs))
+
+(register-primitive-procedure! 'loglogistic loglogistic)
+(register-primitive-procedure! 'kl-divergence kl-divergence)
+(register-primitive-procedure! 'euclidean-distance euclidean-distance)
+(register-primitive-procedure! 'normalized-euclidean-distance normalized-euclidean-distance)
+(register-primitive-procedure! 'symmetrized-divergence symmetrized-divergence)
+(register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
+
+
+(church
+  
+  (debug-mode 'verbosity 12)
+  (debug-mode 'mh-statistics true)
+  
+  (load "oed-utils.church")
+  
+
+  ; ========================================================
+  ; main query
+  
+  (define (sample-informative-stimuli model1 model2 stimulus-sampler)
+    (repeated-mh-lex-query stimulus-samples stimulus-lag
+      '[(stimulus         (sample-stimulus))
+        (model1-responses (opaque-sample-model-responses model1 stimulus model-samples))
+        (model2-responses (opaque-sample-model-responses model2 stimulus model-samples))
+        (m1-response-dist (empirical-dist model1-responses response-space))
+        (m2-response-dist (empirical-dist model2-responses response-space))
+        (m1-m2-divergence (normalized-euclidean-distance m1-response-dist m2-response-dist))]
+      'stimulus
+      '(flip m1-m2-divergence)
+      (get-current-environment)))
+
+
+  ; ========================================================
+  ; example
+
+  (load "./experiments/multinomial.experiment")
+  
+  (define stimulus-samples 500)
+  (define stimulus-lag 3)
+  
+  (define model-samples 1000)
+  (define model-lag 2)
+  (define model-swaps 3)
+  
+  (define informative-stimuli (sample-informative-stimuli model1 model2 sample-stimulus))
+
+  (pretty-print informative-stimuli)
+  (pretty-print (empirical-dist informative-stimuli stimulus-space))
+
+)

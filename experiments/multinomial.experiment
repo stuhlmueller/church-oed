@@ -1,0 +1,29 @@
+; ------------------------------------------------------------------
+; Stimuli
+
+(define stimulus-space
+  (list 0 1 2 3 4 5 6))
+
+(define (sample-stimulus)
+  (uniform-draw stimulus-space))
+
+(define stimulus-1 1)
+(define stimulus-2 2)
+
+; ------------------------------------------------------------------
+; Response Space
+  
+(define response-space
+  (list true false))
+
+
+; ------------------------------------------------------------------
+; Models
+  
+(define (model1 x n)
+  (let ((probs (list 0.5 0.5 0.5 0.5 0.5 0.6 0.7)))
+    (repeat n (lambda () (flip (list-ref probs x))))))
+
+(define (model2 x n)
+  (let ((probs (list 0.5 0.8 0.7 0.6 0.5 0.6 0.7)))
+    (repeat n (lambda () (flip (list-ref probs x))))))

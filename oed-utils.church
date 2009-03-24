@@ -1,0 +1,34 @@
+; ========================================================
+; helper functions
+
+(define (make-opaque f)
+  (lambda args (apply-church-procedure f args)))
+                            
+(define opaque-sample-model-responses
+  (make-opaque (lambda (model stimulus n) (model stimulus n))))
+
+(define (frac l s)
+  (* (/ (length (filter (lambda (x) (equal? x s)) l)) (length l)) 1.0))
+
+(define (empirical-dist data possible-values)
+  (map (lambda (v) (frac data v)) possible-values))
+  
+(define (sqrt x)
+  (expt x 0.5))
+
+(define (mean x)
+ (/ (sum x) (length x)))
+
+(define (stddev x)
+   (let ((mean_x (mean x)))
+        (sqrt (mean (map (lambda (v) (expt (- v mean_x) 2)) x)))))
+
+(define (corrcoef x y)
+  (let ((N (length x)))
+    (/ (- (sum (multi-map (lambda (xi yi) (* xi yi)) (list x y))) (* (* N (mean x)) (mean y)))
+       (* (* N (stddev x)) (stddev y)))))
+
+;(define x  (list 0.0 0.0 1.0 0.0 0.3))
+;(define y  (list 0.0 0.0 0.0 1.0 0.3))
+;
+;(corrcoef x y)

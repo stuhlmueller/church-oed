@@ -1,0 +1,24 @@
+(define training-data
+  (list
+    'training-data
+    2 ; num features
+    2 ; num values
+    (list
+     '((1 0) ; Positive examples.
+       (0 1) ; Negative examples.
+       ))
+   (list 
+     '(true false))))
+
+(define test-data
+  (list
+    'test-data
+    2 ; num features
+    2 ; num values
+    (list
+     '((1 0)
+       (0 1)))))
+
+(define observed-labels (first (data->labels training-data)))
+(define training-objects (data->samples training-data))
+(define test-objects (data->samples test-data))

@@ -1,0 +1,22 @@
+; ------------------------------------------------------------------
+; Stimuli
+
+(define (sample-stimulus)
+  (uniform-draw (list 1 2 3 4 5 6 7)))
+
+
+; ------------------------------------------------------------------
+; Response Space
+  
+(define response-space
+  (list true false))
+
+
+; ------------------------------------------------------------------
+; Models
+  
+(define (model1 x n)
+  (repeat n (lambda () (if (flip (if (< x 2.5) 0.1 0.9)) true false))))
+
+(define (model2 x n)
+  (repeat n (lambda () (if (< x 5.5) (if (flip (if (< x 2.5) 0.1 0.9)) true false) (if (flip 0.95) false true)))))

@@ -1,0 +1,86 @@
+; ------------------------------------------------------------------
+; Stimuli
+
+(define (sample-stimulus)  
+  (begin 
+    (display "\nsampling stimulus ... ")
+    (let ((stimulus (uniform-draw (list stimulus-1 stimulus-2))))
+         (display (third stimulus))
+         (display "\n")
+         stimulus)))
+
+(define stimulus-1
+  (list
+    (make-data
+      2  ; num features
+      10 ; num values
+      (list
+       ;'((0 0) (0 1) (0 2) (0 3) (1 3) (2 2) (2 1) (3 0))
+       ;'((0 6) (2 0) (0 1) (2 2) (1 1) (3 6) (3 0) (4 6))
+       '((4 6) (0 1) (2 0) (1 6) (1 2) (3 1) (4 0) (7 9))
+       '((6 6) (7 9) (0 7) (2 8) (8 0) (3 4) (4 1) (9 9)))
+     (list 
+       ;'(#t #t #t #t #f #f #f #f)
+       ;'(#t #t #t #t #f #f #f #f)
+       '(#t #t #t #t #f #f #f #f)
+       '(#t #t #t #t #f #f #f #f)))
+    (make-data
+      2  ; num features
+      10 ; num values
+      (list
+       '((9 0) (0 8) (3 6) (2 4))))
+    "stimulus 1"))
+
+(define stimulus-2
+  ; reverse training sequence
+  (list
+    (make-data
+      2  ; num features
+      10 ; num values
+      (list
+       ;'((6 6) (7 9) (0 7) (2 8) (8 0) (3 4) (4 1) (9 9))
+       ;'((4 6) (0 1) (2 0) (1 6) (1 2) (3 1) (4 0) (7 9))
+       '((0 6) (2 0) (0 1) (2 2) (1 1) (3 6) (3 0) (4 6))                    
+       '((0 0) (0 1) (0 2) (0 3) (1 3) (2 2) (2 1) (3 0)))
+     (list 
+       ;'(#t #t #t #t #f #f #f #f)
+       ;'(#t #t #t #t #f #f #f #f)
+       '(#t #t #t #t #f #f #f #f)
+       '(#t #t #t #t #f #f #f #f)))
+    (make-data
+      2  ; num features
+      10 ; num values
+      (list
+       '((9 0) (0 8) (3 6) (2 4))))
+     "stimulus 2"))
+
+
+; ------------------------------------------------------------------
+; Response Space
+
+(define (boolean-sequences n)
+  (if (equal? n 0)
+      (list (list))
+      (apply append
+        (let ((seqs (boolean-sequences (- n 1))))
+           (map (lambda (seq) (map (lambda (bool) (append seq (list bool))) (list true false))) seqs)))))
+
+(define response-space
+  (boolean-sequences 4))
+
+
+; ------------------------------------------------------------------
+; Models
+
+(define (model1 data num-samples)
+  (call-rr-model compositional-model data num-samples 1))
+
+(define (model2 data num-samples)
+  (call-rr-model saliency-model data num-samples 2))
+    
+(define (call-rr-model model data num-samples model-num)
+    (let ((training-objects (data->samples (first data)))
+          (test-objects (data->samples (second data)))
+          (training-labels (data->labels (first data))))
+      (display (format "sampling responses from model ~a (~a samples, ~a lag, ~a swaps) ...\n" model-num num-samples model-lag model-swaps))
+      (model training-objects test-objects training-labels num-samples model-lag model-swaps)))

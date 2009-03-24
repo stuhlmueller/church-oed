@@ -1,0 +1,179 @@
+(define nfeat 2)
+(define nvals 10)
+
+; --------------------------------------------------------------------
+; Standard Model
+
+(define (S) (list 'lambda '(x) (D)))
+(define (D) (if (flip 0.3) (list 'or (D) (C)) (C)))
+(define (C) (if (flip 0.3) (list 'and (C) (F)) (F)))
+(define (F) (list '= (list 'feat (N) 'x) (V)))
+(define (V) (sample-integer nvals))
+(define (N) (sample-integer nfeat))
+
+(define (standard-model training-objects test-objects observed-labels num-samples num-steps-between num-swap-attempts)
+    (tempered-repeated-mh-lex-query
+
+        '(noise) '((0.0001 0.1 0.3)) num-samples num-steps-between num-swap-attempts
+
+        '((expression-A (S))
+          (expression-B (S))
+          ;(expression-C (S))
+          ;(expression-D (S))
+
+          (procedure-A (eval expression-A (get-current-environment)))
+          (procedure-B (eval expression-B (get-current-environment)))
+          ;(procedure-C (eval expression-C (get-current-environment)))
+          ;(procedure-D (eval expression-D (get-current-environment)))
+
+          (noisy-A (noisify procedure-A noise))
+          (noisy-B (noisify procedure-B noise))
+          ;(noisy-C (noisify procedure-C noise))
+          ;(noisy-D (noisify procedure-D noise))
+          )
+
+        '(map procedure-B (first test-objects))
+
+        '(and (equal? (map noisy-A (first training-objects)) (first observed-labels)) 
+              (equal? (map noisy-B (second training-objects)) (second observed-labels))
+              ;(equal? (map noisy-C (third training-objects)) (third observed-labels))
+              ;(equal? (map noisy-D (fourth training-objects)) (fourth observed-labels))
+              )
+
+        (get-current-environment)))
+
+
+; --------------------------------------------------------------------
+; Compositional Model
+
+(define (cS A) (list 'lambda '(x) (cD A)))
+(define (cD A) (if (flip 0.3) (list 'or (cD A) (cC A)) (cC A)))
+(define (cC A) (if (flip 0.3) (list 'and (cC A) (cF A)) (cF A)))
+(define (cF A) (if (flip) (list '= (list 'feat (cN) 'x) (cV)) (list A 'x))) 
+(define (cV) (sample-integer nvals))
+(define (cN) (sample-integer nfeat))
+
+(define (compositional-model training-objects test-objects observed-labels num-samples num-steps-between num-swap-attempts)
+    (tempered-repeated-mh-lex-query
+
+        '(noise) '((0.0001 0.1 0.3)) num-samples num-steps-between num-swap-attempts
+
+        '((expression-A (cS 'always-true))
+          (expression-B (cS 'procedure-A))
+          ;(expression-C (cS 'procedure-B))
+          ;(expression-D (cS 'procedure-C))
+
+          (procedure-A (eval expression-A (get-current-environment)))
+          (procedure-B (eval expression-B (get-current-environment)))
+          ;(procedure-C (eval expression-C (get-current-environment)))
+          ;(procedure-D (eval expression-D (get-current-environment)))
+
+          (noisy-A (noisify procedure-A noise))
+          (noisy-B (noisify procedure-B noise))
+          ;(noisy-C (noisify procedure-C noise))
+          ;(noisy-D (noisify procedure-D noise))
+          )
+
+        '(map procedure-B (first test-objects))
+
+        '(and (equal? (map noisy-A (first training-objects)) (first observed-labels)) 
+              (equal? (map noisy-B (second training-objects)) (second observed-labels))
+              ;(equal? (map noisy-C (third training-objects)) (third observed-labels))
+              ;(equal? (map noisy-D (fourth training-objects)) (fourth observed-labels))
+              )
+
+        (get-current-environment)))
+
+
+; --------------------------------------------------------------------
+; Saliency Model
+
+(define (sS k) (list 'lambda '(x) (sD k)))
+(define (sD k) (if (flip 0.3) (list 'or (sD k) (sC k)) (sC k)))
+(define (sC k) (if (flip 0.3) (list 'and (sC k) (sF k)) (sF k)))
+(define (sF k) (let ((NV (sNV k))) (list '= (list 'feat (first NV) 'x) (second NV))))
+(define (sNV k) (if (and (not (equal? k '())) (flip 0.9))
+                    (uniform-draw k)
+                    (list (sample-integer nfeat) (sample-integer nvals))))
+
+(define (getfeatvals expr)
+ (if (list? expr)
+     (if (equal? (first expr) '=)
+           (let ( (feat (second (second expr)))
+                  (val  (third expr)) )
+             (list (list feat val)))
+         (apply append (map getfeatvals expr)))
+     '()))
+
+(define (saliency-model training-objects test-objects observed-labels num-samples num-steps-between num-swap-attempts)
+    (tempered-repeated-mh-lex-query
+
+        '(noise) '((0.0001 0.1 0.3)) num-samples num-steps-between num-swap-attempts
+
+        '((expression-A (sS '()))
+          (featvals-A   (getfeatvals expression-A))
+          (expression-B (sS featvals-A))
+          ;(featvals-B   (getfeatvals expression-B))
+          ;(expression-C (sS featvals-B))
+          ;(featvals-C   (getfeatvals expression-C))
+          ;(expression-D (sS featvals-C))
+
+          (procedure-A (eval expression-A (get-current-environment)))
+          (procedure-B (eval expression-B (get-current-environment)))
+          ;(procedure-C (eval expression-C (get-current-environment)))
+          ;(procedure-D (eval expression-D (get-current-environment)))
+
+          (noisy-A (noisify procedure-A noise))
+          (noisy-B (noisify procedure-B noise))
+          ;(noisy-C (noisify procedure-C noise))
+          ;(noisy-D (noisify procedure-D noise))
+          )
+
+        '(map procedure-B (first test-objects))
+
+        '(and (equal? (map noisy-A (first training-objects)) (first observed-labels)) 
+              (equal? (map noisy-B (second training-objects)) (second observed-labels))
+              ;(equal? (map noisy-C (third training-objects)) (third observed-labels))
+              ;(equal? (map noisy-D (fourth training-objects)) (fourth observed-labels))
+              )
+
+        (get-current-environment)))
+        
+        
+; ------------------------------------------------------------------
+; Utils
+
+; given two lists, distance computes what percentage of the entries
+; are equal (order matters)
+(define (distance l1 l2)
+  (exact->inexact (- 1 (/ (apply + (map (lambda (v) (if v 1 0)) (multi-map equal? (list l1 l2)))) (length l1)))))
+
+(define (always-true x) true)
+
+; this function is used in the rules to lookup a feature value:
+(define (feat N x)
+  (list-ref x N)) ; 0-indexed
+
+(define (noisify predicate b) 
+  (lambda (obj) (flip (if (predicate obj) (- 1 b) b))))
+
+(define (last l)
+  (list-ref l (- (length l) 1)))
+
+; data access
+(define (make-data num-features num-values samples . labels)
+  (if (not (equal? labels '()))
+      (list 'data num-features num-values samples (first labels))
+      (list 'data num-features num-values samples)))
+
+(define (data->num_features data)
+  (second data))
+
+(define (data->num_values data)
+  (third data))
+
+(define (data->samples data)
+  (fourth data))
+
+(define (data->labels data)
+  (fifth data))
