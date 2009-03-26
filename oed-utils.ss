@@ -5,7 +5,8 @@
           normalized-euclidean-distance
           kl-divergence
           symmetrized-divergence
-          loglogistic)
+          loglogistic
+          quicksort)
   (import (rnrs) (church readable-scheme))
     
   (define (sigmoid x a b)
@@ -32,5 +33,27 @@
   (define (loglogistic x a)
     (/ 1 (+ 1 (expt x (- a)))))
   
+    (define pivot (lambda (l pred)
+      (cond ((null? l) 'done)
+    	      ((null? (rest l)) 'done)
+            ((pred (first l) (first (rest l))) (pivot (rest l) pred)) 
+            ((equal? (first l) (first (rest l))) (pivot (rest l) pred)) 
+     	      (else (uniform-draw l)))))
+
+  ; usage: (q-partition 4 '(6 4 2 1 7) () ()) -> returns q-partitions
+  (define q-partition (lambda (piv l pred p1 p2)
+    (if (null? l) (list p1 p2)
+       (if (pred (first l) piv) 
+         (q-partition piv (rest l) pred (pair (first l) p1) p2)
+  	     (q-partition piv (rest l) pred p1 (pair (first l) p2))))))
+
+  (define (quicksort l pred)
+   (display l)
+   (display "\n\n")
+   (let ((piv (pivot l pred)))
+     (if (equal? piv 'done) l
+       (let ((parts (q-partition piv l pred '() '())))
+         (append (quicksort (first parts) pred) 
+                 (quicksort (second parts) pred))))))
   
 )

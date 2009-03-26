@@ -1,0 +1,140 @@
+; ------------------------------------------------------------------
+; Stimuli
+
+(define (draw-features)
+  (repeat (length feature-space) (lambda () (uniform-draw value-space))))
+
+(define (draw-features-with-exclusion excluded-combinations)
+  (let* ((feats (draw-features))
+         (num-occ-excl (length (filter (lambda (ex) (equal? ex feats)) excluded-combinations))))
+    (if (equal? num-occ-excl 0)
+      feats
+      (draw-features-with-exclusion excluded-combinations))))
+        
+(define (draw-distinct num cat drawn)
+  (if (equal? num 0) '()
+    (let ((cur-draw (draw-features-with-exclusion drawn)))
+      (append (list (pair cur-draw cat)) (draw-distinct (- num 1) cat (append (list cur-draw) drawn))))))
+
+(define (sample-stimulus)  
+  (let* ((pos (draw-distinct 5 1 '()))
+         (neg (draw-distinct 4 0 (map first pos))))
+    (append pos neg (list (draw-features-with-exclusion (append (map first pos) (map first neg)))))))
+
+(define stimulus-1 (list 
+  (pair (list 0 0 0 1) 0)
+  (pair (list 0 1 0 1) 0)
+  (pair (list 0 1 0 0) 0)
+  (pair (list 0 0 1 0) 0)
+  (pair (list 1 0 0 0) 0)
+  (pair (list 0 0 1 1) 1)
+  (pair (list 1 0 0 1) 1)
+  (pair (list 1 1 1 0) 1)
+  (pair (list 1 1 1 1) 1)
+  (list 0 0 0 0)))
+
+(define stimulus-2 (list 
+  (pair (list 0 0 0 1) 0)
+  (pair (list 0 1 0 1) 0)
+  (pair (list 0 1 0 0) 0)
+  (pair (list 0 0 1 0) 0)
+  (pair (list 1 0 0 0) 0)
+  (pair (list 0 0 1 1) 1)
+  (pair (list 1 0 0 1) 1)
+  (pair (list 1 1 1 0) 1)
+  (pair (list 1 1 1 1) 1)
+  (list 1 1 1 1)))
+
+
+; ------------------------------------------------------------------
+; Response Space
+
+; only two categories for now
+(define response-space
+  (list 0 1))
+
+; four features ...
+(define feature-space
+  (list 0 1 2 3))
+
+; each of which has one of two values
+(define value-space
+  (list 1 0))
+
+
+; ------------------------------------------------------------------
+; Models
+; a stimulus is a (list (pair training-example-1  training-example-2 training-example-3 ... test-example)
+; where each example is a (list feat-1-val feat-2-val feat-3-val), each feature being
+; a draw from the response space
+
+  (define (similarity x y ld)
+    (exp (- (* ld (sum (multi-map (lambda (a b) (if (equal? a b) 0.0 1.0)) (list x y)))))))
+  
+  (define (categorize stimuli categories)
+    (map (lambda (cat) (filter (lambda (s) (equal? (rest s) cat)) stimuli)) categories))
+
+  ; get a single feature value for a single prototype  
+  ; for now only two values
+  (define (get-prototypical-value value-list)
+    (if (> (frac value-list (first value-space)) 0.5) (first value-space) (second value-space)))
+
+  ; get a single prototype
+  (define (examples-to-prototype examples)
+    (let* ((example-bundles (map first examples))
+           (num-features (length feature-space))
+           (feature-bundles (map (lambda (feat-num) (map (lambda (x) (list-ref x feat-num)) example-bundles)) (iota num-features))))
+      (map get-prototypical-value feature-bundles)))
+
+  ; get all prototypes
+  (define (get-prototypes stimuli categories)
+    (let* ((training-stimuli (all-but-last stimuli))
+         (categorized-stimuli (categorize stimuli categories)))
+      (map examples-to-prototype categorized-stimuli)))
+
+  (define (prt-cat-probability stimulus prototype category-prototypes)
+    (/ (similarity stimulus prototype 1.0) (sum (map (lambda (cat-prototype) (similarity stimulus cat-prototype 1.0)) category-prototypes))))
+
+  (define (prototype-dist stimuli)
+    (let* ((test-stimulus (last stimuli))
+           (categories response-space)
+           (cat-prts (get-prototypes stimuli categories))
+           (cat-probabilities (map (lambda (prt) (prt-cat-probability test-stimulus prt cat-prts)) cat-prts)))
+      (normalize cat-probabilities)))
+
+  (define (prototype-model stimuli n)
+    (let ((cat-probabilities (prototype-dist stimuli))
+          (categories response-space))
+      (repeat n (lambda () (multinomial categories cat-probabilities)))))
+      
+
+  (define (gcm-cat-probability stimulus current-category-stimuli all-category-stimuli)
+    (let* ((cur-sim-sum (sum (map (lambda (cat-stim) (similarity cat-stim stimulus 1.0)) current-category-stimuli)))
+           (all-sim-sum (sum (map (lambda (cat-stimuli) (sum (map (lambda (cat-stim) (similarity cat-stim stimulus 1.0)) cat-stimuli))) all-category-stimuli))))
+      (/ cur-sim-sum all-sim-sum)))
+
+  (define (gcm-dist stimuli)
+    (let* ((test-stimulus (last stimuli))
+           (categories response-space)
+           (all-cat-stimuli (map (lambda (x) (map first x)) (categorize stimuli categories)))
+           (cat-probabilities (map (lambda (cur-cat-stimuli) (gcm-cat-probability test-stimulus cur-cat-stimuli all-cat-stimuli)) all-cat-stimuli)))
+     (normalize cat-probabilities)))
+
+  (define (gcm-model stimuli n)
+    (let ((cat-probabilities (gcm-dist stimuli))
+          (categories response-space))
+      (repeat n (lambda () (multinomial categories cat-probabilities)))))
+
+
+
+(define (model1-dist x)
+  (prototype-dist x))
+        
+(define (model1 x n)
+  (prototype-model x n))
+
+(define (model2-dist x)
+  (gcm-dist x))
+    
+(define (model2 x n)
+  (gcm-model x n))

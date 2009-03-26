@@ -17,25 +17,34 @@
   
   ; (load "./experiments/rr.models")
   ; (load "./experiments/rr.experiment")
-  (load "./experiments/multinomial.experiment")
+  ; (load "./experiments/multinomial.experiment")
+  (load "./experiments/exemplar-prototype.experiment")
   (load "./oed-utils.church")
   (define distance normalized-euclidean-distance)
 
-  (define model-samples 1000)
-  (define model-lag 2)
-  (define model-swaps 3)
+  (define model-samples 500)
+  (define model-lag 5)
+  (define model-swaps 5)
   
   (define m1-s1-1 (empirical-dist (model1 stimulus-1 model-samples) response-space))
   (define m1-s1-2 (empirical-dist (model1 stimulus-1 model-samples) response-space))
+  (pretty-print m1-s1-1)
+  (pretty-print m1-s1-2)
   
   (define m1-s2-1 (empirical-dist (model1 stimulus-2 model-samples) response-space))
   (define m1-s2-2 (empirical-dist (model1 stimulus-2 model-samples) response-space))
+  (pretty-print m1-s2-1)
+  (pretty-print m1-s2-2)
   
   (define m2-s1-1 (empirical-dist (model2 stimulus-1 model-samples) response-space))
   (define m2-s1-2 (empirical-dist (model2 stimulus-1 model-samples) response-space))
+  (pretty-print m2-s1-1)
+  (pretty-print m2-s1-2)
   
   (define m2-s2-1 (empirical-dist (model2 stimulus-2 model-samples) response-space))
   (define m2-s2-2 (empirical-dist (model2 stimulus-2 model-samples) response-space))
+  (pretty-print m2-s2-1)
+  (pretty-print m2-s2-2)
   
   (define m1-self-1 (distance m1-s1-1 m1-s1-2))
   (define m1-self-2 (distance m1-s2-1 m1-s2-2))

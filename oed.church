@@ -12,6 +12,11 @@
 (register-primitive-procedure! 'symmetrized-divergence symmetrized-divergence)
 (register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
 
+(define (sort-by-rest l)
+  (quicksort l (lambda (x y) (<= (rest x) (rest y)))))
+
+(register-primitive-procedure! 'sort-by-rest sort-by-rest)
+
 
 (church
   
@@ -32,7 +37,17 @@
         (m1-response-dist (empirical-dist model1-responses response-space))
         (m2-response-dist (empirical-dist model2-responses response-space))
         (m1-m2-divergence (normalized-euclidean-distance m1-response-dist m2-response-dist))]
-      'stimulus
+      '(list stimulus m1-m2-divergence)
+      '(flip m1-m2-divergence)
+      (get-current-environment)))
+
+  (define (sample-informative-stimuli-from-dists model1-dist model2-dist stimulus-sampler)
+    (repeated-mh-lex-query stimulus-samples stimulus-lag
+      '[(stimulus         (sample-stimulus))
+        (m1-response-dist (model1-dist stimulus))
+        (m2-response-dist (model2-dist stimulus))
+        (m1-m2-divergence (normalized-euclidean-distance m1-response-dist m2-response-dist))]
+      '(pair stimulus m1-m2-divergence)
       '(flip m1-m2-divergence)
       (get-current-environment)))
 
@@ -40,18 +55,26 @@
   ; ========================================================
   ; example
 
-  (load "./experiments/multinomial.experiment")
+  (load "./experiments/exemplar-prototype.experiment")
   
-  (define stimulus-samples 500)
-  (define stimulus-lag 3)
+  (define stimulus-samples 100)
+  (define stimulus-lag 10)
   
   (define model-samples 1000)
   (define model-lag 2)
   (define model-swaps 3)
   
-  (define informative-stimuli (sample-informative-stimuli model1 model2 sample-stimulus))
-
-  (pretty-print informative-stimuli)
-  (pretty-print (empirical-dist informative-stimuli stimulus-space))
+  ; (define informative-stimuli (sample-informative-stimuli model1 model2 sample-stimulus))
+  (define informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus))
+  (define sorted-stimuli (sort-by-rest informative-stimuli))
+  (define top-stimulus (first (last sorted-stimuli)))
+  (pretty-print sorted-stimuli)
+  
+  top-stimulus
+  'prototype
+  (model1-dist top-stimulus)
+  'exemplar
+  (model2-dist top-stimulus)
+  ; (pretty-print (empirical-dist informative-stimuli stimulus-space))
 
 )

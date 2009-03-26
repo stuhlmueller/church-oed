@@ -12,7 +12,10 @@
 
 (define (empirical-dist data possible-values)
   (map (lambda (v) (frac data v)) possible-values))
-  
+
+(define opaque-empirical-dist
+  (make-opaque empirical-dist))  
+
 (define (sqrt x)
   (expt x 0.5))
 
@@ -28,7 +31,16 @@
     (/ (- (sum (multi-map (lambda (xi yi) (* xi yi)) (list x y))) (* (* N (mean x)) (mean y)))
        (* (* N (stddev x)) (stddev y)))))
 
-;(define x  (list 0.0 0.0 1.0 0.0 0.3))
-;(define y  (list 0.0 0.0 0.0 1.0 0.3))
-;
-;(corrcoef x y)
+(define (last l)
+  (if (equal? (length l) 1)
+     (first l)
+     (last (rest l))))
+
+(define (all-but-last l)
+  (if (equal? (length l) 1)
+    (list)
+    (append (list (first l)) (all-but-last (rest l)))))
+
+(define (normalize unnormalized-probabilities)
+  (let ((probsum (sum unnormalized-probabilities)))
+    (map (lambda (x) (/ x probsum)) unnormalized-probabilities)))
