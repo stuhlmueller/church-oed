@@ -59,15 +59,15 @@
 ; ------------------------------------------------------------------
 ; Response Space
 
-(define (boolean-sequences n)
+(define (permutations items n)
   (if (equal? n 0)
       (list (list))
       (apply append
-        (let ((seqs (boolean-sequences (- n 1))))
-           (map (lambda (seq) (map (lambda (bool) (append seq (list bool))) (list true false))) seqs)))))
-
+        (let ((seqs (permutations items (- n 1))))
+           (map (lambda (seq) (map (lambda (bool) (append seq (list bool))) items)) seqs)))))
+           
 (define response-space
-  (boolean-sequences 4))
+  (permutations (list true false) 4))
 
 
 ; ------------------------------------------------------------------

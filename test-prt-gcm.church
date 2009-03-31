@@ -1,0 +1,40 @@
+#!r6rs
+
+(import (church)
+        (church church-eval trace-eval)
+        (oed-utils)
+        (rnrs))
+        
+(register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
+(register-primitive-procedure! 'normalized-euclidean-distance normalized-euclidean-distance)
+(register-primitive-procedure! 'euclidean-distance euclidean-distance)
+(register-primitive-procedure! 'loglogistic loglogistic)
+
+(church
+
+  (debug-mode 'mh-statistics true)
+  (debug-mode 'verbosity 8)
+
+  (load "./experiments/exemplar-prototype.experiment")
+  (load "./oed-utils.church")
+  
+  (define test-stimulus (list 
+    (pair (list 0 0 0 1) 0)
+    (pair (list 0 1 0 1) 0)
+    (pair (list 1 0 0 0) 0)
+    (pair (list 0 1 0 0) 1)
+    (pair (list 0 0 0 0) 1)
+    (pair (list 1 1 1 1) 1)
+    (list 1 0 1 1)))
+  
+  (define distance normalized-euclidean-distance)
+  (define model-samples 2000)
+  (define model-lag 5)
+  (define model-swaps 5)
+  
+  (display "prototype: ")
+  (pretty-print (prototype-dist test-stimulus))
+  (display "gcm: ")  
+  (pretty-print (gcm-dist test-stimulus))
+  
+)

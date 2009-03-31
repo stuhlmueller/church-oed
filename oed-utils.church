@@ -13,6 +13,9 @@
 (define (empirical-dist data possible-values)
   (map (lambda (v) (frac data v)) possible-values))
 
+(define (empirical-bins data possible-values)
+  (map (lambda (v) (length (filter (lambda (d) (equal? d v)) data))) possible-values))
+
 (define opaque-empirical-dist
   (make-opaque empirical-dist))  
 
@@ -31,6 +34,15 @@
     (/ (- (sum (multi-map (lambda (xi yi) (* xi yi)) (list x y))) (* (* N (mean x)) (mean y)))
        (* (* N (stddev x)) (stddev y)))))
 
+(define (limit-to-range x from to)
+  (cond ((< x from) from)
+        ((> x to) to)
+        (else x)))
+
+(define (r-squared x y)
+  (let ((r (corrcoef x y)))
+    (limit-to-range (* r r) 0 1)))
+      
 (define (last l)
   (if (equal? (length l) 1)
      (first l)

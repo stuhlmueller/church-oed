@@ -4,8 +4,10 @@
   (export euclidean-distance
           normalized-euclidean-distance
           kl-divergence
-          symmetrized-divergence
+          expected-entropy-decrease
+          symmetrized-kl-divergence
           loglogistic
+          sort-by-rest
           quicksort)
   (import (rnrs) (church readable-scheme))
     
@@ -27,8 +29,12 @@
         (display "LENGTH MISMATCH in divergence")
         (sum (map (lambda (prob1 prob2) (* prob1 (log (/ prob1 prob2)))) dista distb))))
 
-  (define (symmetrized-divergence dista distb)
+  (define (symmetrized-kl-divergence dista distb)
     (/ (+ (kl-divergence dista distb) (kl-divergence distb dista)) 2))
+
+  (define (expected-entropy-decrease dista distb)
+    (let ((prior-dist (map (lambda (a b) (+ (* 0.5 a) (* 0.5 b))) dista distb)))
+      (+ (* 0.5 (kl-divergence dista prior-dist)) (* 0.5 (kl-divergence distb prior-dist)))))
 
   (define (loglogistic x a)
     (/ 1 (+ 1 (expt x (- a)))))
@@ -48,12 +54,13 @@
   	     (q-partition piv (rest l) pred p1 (pair (first l) p2))))))
 
   (define (quicksort l pred)
-   (display l)
-   (display "\n\n")
    (let ((piv (pivot l pred)))
      (if (equal? piv 'done) l
        (let ((parts (q-partition piv l pred '() '())))
          (append (quicksort (first parts) pred) 
                  (quicksort (second parts) pred))))))
+
+  (define (sort-by-rest l)
+    (quicksort l (lambda (x y) (<= (rest x) (rest y)))))
   
 )

@@ -19,11 +19,22 @@
 
 ; ------------------------------------------------------------------
 ; Models
-  
+
+(define model1-probs  (list 0.5 0.5 0.5 0.5 0.5 0.6 0.7))
+
+(define (model1-dist x)
+  (let ((p (list-ref model1-probs x)))
+    (list p (- 1 p))))
+
 (define (model1 x n)
-  (let ((probs (list 0.5 0.5 0.5 0.5 0.5 0.6 0.7)))
-    (repeat n (lambda () (flip (list-ref probs x))))))
+  (repeat n (lambda () (flip (list-ref model1-probs x)))))
+
+
+(define model2-probs (list 0.6 0.9 0.8 0.7 0.6 0.7 0.8))
+
+(define (model2-dist x)
+  (let ((p (list-ref model2-probs x)))
+    (list p (- 1 p))))
 
 (define (model2 x n)
-  (let ((probs (list 0.5 0.8 0.7 0.6 0.5 0.6 0.7)))
-    (repeat n (lambda () (flip (list-ref probs x))))))
+  (repeat n (lambda () (flip (list-ref model2-probs x)))))

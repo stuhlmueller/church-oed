@@ -17,33 +17,27 @@
       (append (list (pair cur-draw cat)) (draw-distinct (- num 1) cat (append (list cur-draw) drawn))))))
 
 (define (sample-stimulus)  
-  (let* ((pos (draw-distinct 5 1 '()))
-         (neg (draw-distinct 4 0 (map first pos))))
+  (let* ((pos (draw-distinct 3 0 '()))
+         (neg (draw-distinct 3 1 (map first pos))))
     (append pos neg (list (draw-features-with-exclusion (append (map first pos) (map first neg)))))))
 
 (define stimulus-1 (list 
+  (pair (list 1 1 1 1) 0)
+  (pair (list 1 1 1 0) 0)
   (pair (list 0 0 0 1) 0)
-  (pair (list 0 1 0 1) 0)
-  (pair (list 0 1 0 0) 0)
-  (pair (list 0 0 1 0) 0)
-  (pair (list 1 0 0 0) 0)
-  (pair (list 0 0 1 1) 1)
-  (pair (list 1 0 0 1) 1)
-  (pair (list 1 1 1 0) 1)
-  (pair (list 1 1 1 1) 1)
-  (list 0 0 0 0)))
+  (pair (list 0 0 0 0) 1)
+  (pair (list 0 0 0 1) 1)
+  (pair (list 1 1 0 0) 1)
+  (list 0 1 0 1)))
 
 (define stimulus-2 (list 
+  (pair (list 1 1 1 1) 0)
+  (pair (list 1 1 1 0) 0)
   (pair (list 0 0 0 1) 0)
-  (pair (list 0 1 0 1) 0)
-  (pair (list 0 1 0 0) 0)
-  (pair (list 0 0 1 0) 0)
-  (pair (list 1 0 0 0) 0)
-  (pair (list 0 0 1 1) 1)
-  (pair (list 1 0 0 1) 1)
-  (pair (list 1 1 1 0) 1)
-  (pair (list 1 1 1 1) 1)
-  (list 1 1 1 1)))
+  (pair (list 0 0 0 0) 1)
+  (pair (list 0 0 0 1) 1)
+  (pair (list 1 1 0 0) 1)
+  (list 0 0 0 0)))
 
 
 ; ------------------------------------------------------------------
@@ -74,6 +68,7 @@
   (define (categorize stimuli categories)
     (map (lambda (cat) (filter (lambda (s) (equal? (rest s) cat)) stimuli)) categories))
 
+
   ; get a single feature value for a single prototype  
   ; for now only two values
   (define (get-prototypical-value value-list)
@@ -93,7 +88,8 @@
       (map examples-to-prototype categorized-stimuli)))
 
   (define (prt-cat-probability stimulus prototype category-prototypes)
-    (/ (similarity stimulus prototype 1.0) (sum (map (lambda (cat-prototype) (similarity stimulus cat-prototype 1.0)) category-prototypes))))
+    (/ (similarity stimulus prototype 1.0)
+       (sum (map (lambda (cat-prototype) (similarity stimulus cat-prototype 1.0)) category-prototypes))))
 
   (define (prototype-dist stimuli)
     (let* ((test-stimulus (last stimuli))
@@ -106,7 +102,7 @@
     (let ((cat-probabilities (prototype-dist stimuli))
           (categories response-space))
       (repeat n (lambda () (multinomial categories cat-probabilities)))))
-      
+  
 
   (define (gcm-cat-probability stimulus current-category-stimuli all-category-stimuli)
     (let* ((cur-sim-sum (sum (map (lambda (cat-stim) (similarity cat-stim stimulus 1.0)) current-category-stimuli)))
