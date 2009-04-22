@@ -18,10 +18,7 @@
     (exact->inexact (sqrt (sum (apply map (lambda (p1 p2) (expt (- p1 p2) 2.0)) (list l1 l2))))))
 
   (define (normalized-euclidean-distance l1 l2)
-    (display "computing distance between responses ... ")
     (let ((res (/ (euclidean-distance l1 l2) (expt (length l1) 0.5))))
-      (display res)
-      (display "\n")
       res))
 
   (define (kl-divergence dista distb)
@@ -38,7 +35,9 @@
 
   (define (loglogistic x a)
     (/ 1 (+ 1 (expt x (- a)))))
-  
+    
+    
+    
     (define pivot (lambda (l pred)
       (cond ((null? l) 'done)
     	      ((null? (rest l)) 'done)
@@ -61,6 +60,6 @@
                  (quicksort (second parts) pred))))))
 
   (define (sort-by-rest l)
-    (quicksort l (lambda (x y) (<= (rest x) (rest y)))))
+    (quicksort l (lambda (x y) (>= (rest x) (rest y)))))
   
 )

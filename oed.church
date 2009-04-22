@@ -13,8 +13,9 @@
 (register-primitive-procedure! 'normalized-euclidean-distance normalized-euclidean-distance)
 (register-primitive-procedure! 'symmetrized-kl-divergence symmetrized-kl-divergence)
 (register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
-(register-primitive-procedure! 'barplot barplot)
 (register-primitive-procedure! 'sort-by-rest sort-by-rest)
+
+(register-primitive-procedure! 'barplot barplot)
 
 
 (church
@@ -41,7 +42,6 @@
   (define (sample-informative-stimuli model1 model2 stimulus-sampler divergence-measure)
     (repeated-mh-lex-query stimulus-samples stimulus-lag
       '[(stimulus         (sample-stimulus))
-      
         (model1-responses (opaque-sample-model-responses model1 stimulus model-samples))
         (model2-responses (opaque-sample-model-responses model2 stimulus model-samples))
         (m1-response-dist (empirical-dist model1-responses response-space))
@@ -61,12 +61,12 @@
       '(flip m1-m2-divergence)
       (get-current-environment)))
 
-  (define (sample-and-plot-informative-stimuli div-measure)
-    (let* ((div-measure-name (first div-measure))
-           (div-measure-proc (rest div-measure))
-           (informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus div-measure-proc))
-           (plot-title (format "Informative Stimuli (~a), ~a samples" div-measure-name stimulus-samples)))
-      (barplot (empirical-bins (map first informative-stimuli) stimulus-space) plot-title "stimulus" "number of samples")))
+  ;(define (sample-and-plot-informative-stimuli div-measure)
+  ;  (let* ((div-measure-name (first div-measure))
+  ;         (div-measure-proc (rest div-measure))
+  ;         (informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus div-measure-proc))
+  ;         (plot-title (format "Informative Stimuli (~a), ~a samples" div-measure-name stimulus-samples)))
+  ;    (barplot (empirical-bins (map first informative-stimuli) stimulus-space) plot-title "stimulus" "number of samples")))
   
   
   ; ========================================================
@@ -74,26 +74,33 @@
 
   (load "./experiments/exemplar-prototype.experiment")
   
-  (define stimulus-samples 100)
+  (define stimulus-samples 1000)
   (define stimulus-lag 10)
   
   (define model-samples 1000)
   (define model-lag 2)
   (define model-swaps 3)
   
-  (define informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus normalized-euclidean-distance))
-  (define sorted-stimuli (sort-by-rest informative-stimuli))
-  (define top-stimulus (first (last sorted-stimuli)))
-  (pretty-print sorted-stimuli)
+  ;(define informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus normalized-euclidean-distance))
+  ;(define sorted-stimuli (sort-by-rest informative-stimuli))
+  ;(define top-stimulus (first (first sorted-stimuli)))
+  ;(pretty-print sorted-stimuli)
+  ;
+  ;;top-stimulus
+  ;'prototype
+  ;(model1-dist top-stimulus)
+  ;'exemplar
+  ;(model2-dist top-stimulus)
+  ; 
+  ;; (map sample-and-plot-informative-stimuli divergence-measures) 
+  ;; (barplot model1-probs "Model 1" "stimulus" "response rate" "ylim=c(0,1)")
+  ;; (barplot model2-probs "Model 2" "stimulus" "response rate" "ylim=c(0,1)")
   
-  ;top-stimulus
-  'prototype
-  (model1-dist top-stimulus)
-  'exemplar
-  (model2-dist top-stimulus)
- 
-  ; (map sample-and-plot-informative-stimuli divergence-measures) 
-  ; (barplot model1-probs "Model 1" "stimulus" "response rate" "ylim=c(0,1)")
-  ; (barplot model2-probs "Model 2" "stimulus" "response rate" "ylim=c(0,1)")
+  (histogram
+    (repeat 300
+    (lambda () (let* ((stimulus (sample-stimulus))
+        (m1 (model1-dist stimulus))
+        (m2 (model2-dist stimulus)))
+    (expected-entropy-decrease m1 m2)))) "expected decrease in entropy over stimuli" "expected decrease in entropy" "number of stimulus samples")
 
 )

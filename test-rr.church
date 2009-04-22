@@ -1,0 +1,87 @@
+#!r6rs
+
+(import (church)
+        (church church-eval trace-eval) 
+        (rnrs)
+        (oed-utils))
+
+(register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
+
+(church
+ 
+ (load "oed-utils.church")
+ (load "./experiments/rr.models") 
+ 
+ (define response-space (list false true))
+ (define feature-space (list 0 1))
+ (define value-space (list 0 1 2 3 4 5 6 7))
+ 
+ ; ------------------------------------------------------------------
+ ; Predefined stimuli
+ ;
+ ; (list training-objects observed-labels test-objects)
+ ; 
+ 
+ (define test-stimulus
+  (list
+    (list
+      '((0 0) (0 0) (0 0) (1 0) (1 0) (1 0))
+      '((0 0) (0 0) (0 0) (1 0) (1 0) (1 0))))
+    (list 
+      (list 1 1 1 0 0 0)
+      (list 1 1 1 0 0 0))
+    (list
+      (list 1 0)))
+ 
+ 
+ ; ------------------------------------------------------------------
+ ; Sampled stimuli
+
+ (define (draw-features)
+   (repeat (length feature-space) (lambda () (uniform-draw value-space))))
+
+ (define (draw-features-with-exclusion excluded-combinations)
+   (let* ((feats (draw-features))
+          (num-occ-excl (length (filter (lambda (ex) (equal? ex feats)) excluded-combinations))))
+     (if (equal? num-occ-excl 0)
+       feats
+       (draw-features-with-exclusion excluded-combinations))))
+
+ (define (draw-distinct num drawn)
+   (if (equal? num 0) '()
+     (let ((cur-draw (draw-features-with-exclusion drawn)))
+       (append (list cur-draw) (draw-distinct (- num 1) (append (list cur-draw) drawn))))))
+
+ (define (sample-stimulus)  
+   (let* ((pos-1 (draw-distinct 3 '()))
+          (neg-1 (draw-distinct 3 pos-1))
+          (pos-2 (draw-distinct 3 (append pos-1 neg-1)))
+          (neg-2 (draw-distinct 3 (append pos-1 neg-1 pos-2)))
+          (test  (draw-distinct 1 (append pos-1 neg-1 pos-2 neg-2))))
+      (list
+        (list
+          (append pos-1 neg-1)
+          (append pos-2 neg-2))
+        (list
+          (list 1 1 1 0 0 0)
+          (list 1 1 1 0 0 0))
+        test)))
+ 
+ (define sampled-stimulus (sample-stimulus))
+ (define get-training-objs first)
+ (define get-labels second)
+ (define get-test-objs third)
+ 
+ (define (call-rr-model stimulus num-samples)
+   (let* ((training-objs (get-training-objs sampled-stimulus))
+          (test-objs (get-test-objs sampled-stimulus))
+          (labels (get-labels sampled-stimulus))
+          (results (standard-model training-objs test-objs labels num-samples 10 10))
+          (categorizations (map first results))
+          (rules (map second results)))
+     (pretty-print rules)
+     (map first categorizations)))
+ 
+ (empirical-dist (call-rr-model test-stimulus 100) (list true false))
+  
+)

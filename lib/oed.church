@@ -1,0 +1,104 @@
+; oed-utils
+
+(define (make-opaque f)
+  (lambda args (apply-church-procedure f args)))
+                            
+(define opaque-sample-model-responses
+  (make-opaque (lambda (model stimulus n) (model stimulus n))))
+
+(define (frac l s)
+  (* (/ (length (filter (lambda (x) (equal? x s)) l)) (length l)) 1.0))
+
+(define (empirical-dist data possible-values)
+  (map (lambda (v) (frac data v)) possible-values))
+
+(define (empirical-bins data possible-values)
+  (map (lambda (v) (length (filter (lambda (d) (equal? d v)) data))) possible-values))
+
+(define opaque-empirical-dist
+  (make-opaque empirical-dist))  
+
+(define (sqrt x)
+  (expt x 0.5))
+
+(define (mean x)
+ (/ (sum x) (length x)))
+
+(define (stddev x)
+   (let ((mean_x (mean x)))
+        (sqrt (mean (map (lambda (v) (expt (- v mean_x) 2)) x)))))
+
+(define (corrcoef x y)
+  (let ((N (length x)))
+    (/ (- (sum (multi-map (lambda (xi yi) (* xi yi)) (list x y))) (* (* N (mean x)) (mean y)))
+       (* (* N (stddev x)) (stddev y)))))
+
+(define (limit-to-range x from to)
+  (cond ((< x from) from)
+        ((> x to) to)
+        (else x)))
+
+(define (r-squared x y)
+  (let ((r (corrcoef x y)))
+    (limit-to-range (* r r) 0 1)))
+      
+(define (last l)
+  (if (and (list l) (equal? (length l) 1))
+     (first l)
+     (last (rest l))))
+
+(define (all-but-last l)
+  (if (equal? (length l) 1)
+    (list)
+    (append (list (first l)) (all-but-last (rest l)))))
+
+(define (zip lists)
+  (multi-map list lists))
+
+(define (normalize unnormalized-probabilities)
+  (let ((probsum (sum unnormalized-probabilities)))
+    (map (lambda (x) (/ x probsum)) unnormalized-probabilities)))
+
+(define divergence-measure normalized-euclidean-distance)
+
+(define (sample-informative-stimuli model1-dist model2-dist sample-stimulus stimulus-samples stimulus-lag)
+  (sort-by-rest
+    (repeated-mh-lex-query stimulus-samples stimulus-lag
+      '[(stimulus         (sample-stimulus))
+        (m1-response-dist (apply model1-dist stimulus))
+        (m2-response-dist (apply model2-dist stimulus))
+        (m1-m2-divergence (divergence-measure m1-response-dist m2-response-dist))]
+      '(pair stimulus m1-m2-divergence)
+      '(flip m1-m2-divergence)
+      (get-current-environment))))
+
+
+
+
+(define display-all
+  (lambda args (map display args)))
+
+(define (sample-except proc drawn)
+  (let* ((current-sample (proc))
+         (num-violations (length (filter (lambda (d) (equal? d current-sample)) drawn))))
+    (if (equal? num-violations 0)
+        current-sample
+        (sample-except proc drawn))))
+  
+(define (sample-distinct proc num drawn)
+  (if (equal? num 0) 
+      '()
+      (let ((current-sample (sample-except proc drawn)))
+           (pair current-sample (sample-distinct proc (- num 1) (pair current-sample drawn))))))
+
+(define (pair-sort-by-label labeled-stimuli)
+  (map (lambda (cat) (filter (lambda (s) (equal? (second s) cat)) labeled-stimuli)) response-space))
+
+(define (get-firsts lists)
+  (map (lambda (l) (map first l)) lists))
+
+(define (sort-by-label stimuli labels)
+  (get-firsts (pair-sort-by-label (zip (list stimuli labels)))))
+
+(define (most-frequent-value value-list)
+  (if (> (frac value-list (first value-space)) 0.5) (first value-space) (second value-space)))
