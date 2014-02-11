@@ -2,6 +2,7 @@
 
 Main files:
 
+- `screencast/*.mov`: Demonstration of the system (modeling/design expt/run/evaluate loop)
 - `exemplar-prototype.experiment`:
   - Generator for stimuli (features and responses)
   - Prototype model
