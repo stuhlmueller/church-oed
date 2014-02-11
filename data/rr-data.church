@@ -1,63 +1,63 @@
 (define training-data
   (list
+   
+   'training-data
+   
+   2  ;; num features
+   10 ;; num values
+   
+   (list
+    '((0 0) ;; Positive examples.
+      (0 1)
+      (0 2)
+      (0 3)
+      (1 3) ;; Negative examples.
+      (2 2) 
+      (2 1) 
+      (3 0))
     
-    'training-data
+    '((0 6) ;; Positive examples.
+      (2 0)
+      (0 1)
+      (2 2)
+      (1 1) ;; Negative examples.
+      (3 6) 
+      (3 0) 
+      (4 6))
     
-    2  ; num features
-    10 ; num values
-    
-    (list
-     '((0 0) ; Positive examples.
-       (0 1)
-       (0 2)
-       (0 3)
-       (1 3) ; Negative examples.
-       (2 2) 
-       (2 1) 
-       (3 0))
-        
-     '((0 6) ; Positive examples.
-       (2 0)
-       (0 1)
-       (2 2)
-       (1 1) ; Negative examples.
-       (3 6) 
-       (3 0) 
-       (4 6))
-      
-     ;'((4 6) ; Positive examples.
-     ;  (0 1)
-     ;  (2 0)
-     ;  (1 6)
-     ;  (1 2) ; Negative examples.
-     ;  (3 1) 
-     ;  (4 0) 
-     ;  (7 9))
-     ; 
-     ;'((6 6) ; Positive examples.
-     ;  (7 9) 
-     ;  (0 7)
-     ;  (2 8)
-     ;  (8 0) ; Negative examples.
-     ;  (3 4) 
-     ;  (4 1)
-     ;  (9 9))
-     )
-  
+    ;;'((4 6) ;; Positive examples.
+    ;;  (0 1)
+    ;;  (2 0)
+    ;;  (1 6)
+    ;;  (1 2) ;; Negative examples.
+    ;;  (3 1) 
+    ;;  (4 0) 
+    ;;  (7 9))
+    ;; 
+    ;;'((6 6) ;; Positive examples.
+    ;;  (7 9) 
+    ;;  (0 7)
+    ;;  (2 8)
+    ;;  (8 0) ;; Negative examples.
+    ;;  (3 4) 
+    ;;  (4 1)
+    ;;  (9 9))
+    )
+   
    (list 
-     '(#t #t #t #t #f #f #f #f)
-     '(#t #t #t #t #f #f #f #f)
-     ;'(#t #t #t #t #f #f #f #f)
-     ;'(#t #t #t #t #f #f #f #f)
-     )))
+    '(#t #t #t #t #f #f #f #f)
+    '(#t #t #t #t #f #f #f #f)
+    ;;'(#t #t #t #t #f #f #f #f)
+    ;;'(#t #t #t #t #f #f #f #f)
+    )))
 
 (define test-data
   (list
-    'test-data
-    2  ; num features
-    10 ; num values
-    (list
-     '((9 0)
-       (0 8)
-       (3 6)
-       (2 4)))))
+   'test-data
+   2  ;; num features
+   10 ;; num values
+   (list
+    '((9 0)
+      (0 8)
+      (3 6)
+      (2 4)))))

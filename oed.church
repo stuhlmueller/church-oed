@@ -1,8 +1,9 @@
 #!r6rs
-(import (church church) 
-        (church church-eval trace-eval) 
-        (church readable-scheme) 
-        (church external r) 
+
+(import (church church)
+        (church church-eval trace-eval)
+        (church readable-scheme)
+        (church external r)
         (oed-utils)
         (rnrs))
 
@@ -14,93 +15,69 @@
 (register-primitive-procedure! 'symmetrized-kl-divergence symmetrized-kl-divergence)
 (register-primitive-procedure! 'apply-church-procedure apply-church-procedure)
 (register-primitive-procedure! 'sort-by-rest sort-by-rest)
-
 (register-primitive-procedure! 'barplot barplot)
 
 
 (church
-  
-  (debug-mode 'verbosity 12)
-  (debug-mode 'mh-statistics true)
-  
-  (load "oed-utils.church")
-  
-  (define divergence-measures
-    (list
-      (pair "euclidean distance" normalized-euclidean-distance)
-      (pair "expected decrease in entropy (l 0.5)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 0.5)))
-      (pair "expected decrease in entropy (l 1)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 1)))
-      (pair "expected decrease in entropy (l 2)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 2)))      
-      (pair "symmetrized kl divergence (l 0.5)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 0.5)))
-      (pair "symmetrized kl divergence (l 1)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 1)))
-      (pair "symmetrized kl divergence (l 2)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 2)))))
+
+ (debug-mode 'verbosity 12)
+ (debug-mode 'mh-statistics true)
+
+ (load "oed-utils.church")
+
+ (define divergence-measures
+   (list
+    (pair "euclidean distance" normalized-euclidean-distance)
+    (pair "expected decrease in entropy (l 0.5)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 0.5)))
+    (pair "expected decrease in entropy (l 1)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 1)))
+    (pair "expected decrease in entropy (l 2)" (lambda (dista distb) (loglogistic (expected-entropy-decrease dista distb) 2)))
+    (pair "symmetrized kl divergence (l 0.5)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 0.5)))
+    (pair "symmetrized kl divergence (l 1)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 1)))
+    (pair "symmetrized kl divergence (l 2)" (lambda (dista distb) (loglogistic (symmetrized-kl-divergence dista distb) 2)))))
 
 
-  ; ========================================================
-  ; main query
-  
-  (define (sample-informative-stimuli model1 model2 stimulus-sampler divergence-measure)
-    (repeated-mh-lex-query stimulus-samples stimulus-lag
-      '[(stimulus         (sample-stimulus))
-        (model1-responses (opaque-sample-model-responses model1 stimulus model-samples))
-        (model2-responses (opaque-sample-model-responses model2 stimulus model-samples))
-        (m1-response-dist (empirical-dist model1-responses response-space))
-        (m2-response-dist (empirical-dist model2-responses response-space))
-        (m1-m2-divergence (divergence-measure m1-response-dist m2-response-dist))]
-      '(list stimulus m1-m2-divergence)
-      '(flip m1-m2-divergence)
-      (get-current-environment)))
+ ;; ========================================================
+ ;; main query
 
-  (define (sample-informative-stimuli-from-dists model1-dist model2-dist stimulus-sampler divergence-measure)
-    (repeated-mh-lex-query stimulus-samples stimulus-lag
-      '[(stimulus         (sample-stimulus))
-        (m1-response-dist (model1-dist stimulus))
-        (m2-response-dist (model2-dist stimulus))
-        (m1-m2-divergence (divergence-measure m1-response-dist m2-response-dist))]
-      '(pair stimulus m1-m2-divergence)
-      '(flip m1-m2-divergence)
-      (get-current-environment)))
+ (define (sample-informative-stimuli model1 model2 stimulus-sampler divergence-measure)
+   (repeated-mh-lex-query stimulus-samples stimulus-lag
+                          '[(stimulus         (sample-stimulus))
+                            (model1-responses (opaque-sample-model-responses model1 stimulus model-samples))
+                            (model2-responses (opaque-sample-model-responses model2 stimulus model-samples))
+                            (m1-response-dist (empirical-dist model1-responses response-space))
+                            (m2-response-dist (empirical-dist model2-responses response-space))
+                            (m1-m2-divergence (divergence-measure m1-response-dist m2-response-dist))]
+                          '(list stimulus m1-m2-divergence)
+                          '(flip m1-m2-divergence)
+                          (get-current-environment)))
 
-  ;(define (sample-and-plot-informative-stimuli div-measure)
-  ;  (let* ((div-measure-name (first div-measure))
-  ;         (div-measure-proc (rest div-measure))
-  ;         (informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus div-measure-proc))
-  ;         (plot-title (format "Informative Stimuli (~a), ~a samples" div-measure-name stimulus-samples)))
-  ;    (barplot (empirical-bins (map first informative-stimuli) stimulus-space) plot-title "stimulus" "number of samples")))
-  
-  
-  ; ========================================================
-  ; example
+ (define (sample-informative-stimuli-from-dists model1-dist model2-dist stimulus-sampler divergence-measure)
+   (repeated-mh-lex-query stimulus-samples stimulus-lag
+                          '[(stimulus         (sample-stimulus))
+                            (m1-response-dist (model1-dist stimulus))
+                            (m2-response-dist (model2-dist stimulus))
+                            (m1-m2-divergence (divergence-measure m1-response-dist m2-response-dist))]
+                          '(pair stimulus m1-m2-divergence)
+                          '(flip m1-m2-divergence)
+                          (get-current-environment)))
 
-  (load "./experiments/exemplar-prototype.experiment")
-  
-  (define stimulus-samples 1000)
-  (define stimulus-lag 10)
-  
-  (define model-samples 1000)
-  (define model-lag 2)
-  (define model-swaps 3)
-  
-  ;(define informative-stimuli (sample-informative-stimuli-from-dists model1-dist model2-dist sample-stimulus normalized-euclidean-distance))
-  ;(define sorted-stimuli (sort-by-rest informative-stimuli))
-  ;(define top-stimulus (first (first sorted-stimuli)))
-  ;(pretty-print sorted-stimuli)
-  ;
-  ;;top-stimulus
-  ;'prototype
-  ;(model1-dist top-stimulus)
-  ;'exemplar
-  ;(model2-dist top-stimulus)
-  ; 
-  ;; (map sample-and-plot-informative-stimuli divergence-measures) 
-  ;; (barplot model1-probs "Model 1" "stimulus" "response rate" "ylim=c(0,1)")
-  ;; (barplot model2-probs "Model 2" "stimulus" "response rate" "ylim=c(0,1)")
-  
-  (histogram
-    (repeat 300
-    (lambda () (let* ((stimulus (sample-stimulus))
-        (m1 (model1-dist stimulus))
-        (m2 (model2-dist stimulus)))
-    (expected-entropy-decrease m1 m2)))) "expected decrease in entropy over stimuli" "expected decrease in entropy" "number of stimulus samples")
+ ;; ========================================================
+ ;; example
 
-)
+ (load "./experiments/exemplar-prototype.experiment")
+
+ (define stimulus-samples 1000)
+ (define stimulus-lag 10)
+
+ (define model-samples 1000)
+ (define model-lag 2)
+ (define model-swaps 3)
+
+ (histogram
+  (repeat 300
+          (lambda () (let* ((stimulus (sample-stimulus))
+                       (m1 (model1-dist stimulus))
+                       (m2 (model2-dist stimulus)))
+                  (expected-entropy-decrease m1 m2)))) "expected decrease in entropy over stimuli" "expected decrease in entropy" "number of stimulus samples")
+
+ )

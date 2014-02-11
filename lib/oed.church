@@ -72,9 +72,6 @@
       '(flip m1-m2-divergence)
       (get-current-environment))))
 
-
-
-
 (define display-all
   (lambda args (map display args)))
 
